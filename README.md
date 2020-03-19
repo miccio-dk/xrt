@@ -1,9 +1,9 @@
-# <Insert Name Here>
+# XRT: eXpressive Rotational Tool
 > Mini-project for *Realtime Interaction and Performance* (AAU SMC 2020)
 
 
 ## Description
-New Interface for musical expression featuring interaction with flywheels.
+New interface for musical expression featuring interaction with flywheels.
 
 
 ## Instructions
