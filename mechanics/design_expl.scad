@@ -11,7 +11,7 @@ dr = d/2-th*4; // disk radius
 nd = 8; // number of disks
 nt = 48; // n teeth
 td = 5; // teeth depth
-kerf = 0.1; // kerf for 3mm mdf
+kerf = 0; // kerf for 3mm mdf
 
 ntw = 15;
 ntd = 7;
@@ -20,7 +20,7 @@ nth = 2;
 // RUNTIME PARAMS //
 $fn = 32;
 vo = 10 * pow(1-$t, 4); // animation
-vo = 0; // offset
+vo = 30; // offset
 k = 0.05; // zbuffer semi-fix
 
 assembly();
@@ -29,15 +29,15 @@ assembly();
 // normal assembly
 module assembly() {
     // outer walls
-    base();
-    translate([0,        0,      h-th+vo*2]) top();
+    translate([0,       0,      -vo]) base();
+    translate([0,       0,      0]) top();
     translate([0,       -vo,     vo]) side_long();
-    translate([0,       d-th+vo, vo]) side_long();
+    translate([0,       -vo*2, vo]) side_long();
     translate([-vo,     0,       vo]) side_short();
-    translate([w-th+vo, 0,       vo]) side_short();
+    translate([-vo*2,   0,       vo]) side_short();
     // spinning parts
-    translate([0,       d/2,     h+sh+vo]) rotate([0, 90, 0]) rod();
-    translate([0,       d/2,     h+sh+vo]) rotate([0, 90, 0]) disks();
+    translate([0,       d/2,     h+sh+dr*2+vo*2]) rotate([0, 90, 0]) rod();
+    translate([0,       d/2,     h+sh+dr+vo]) rotate([0, 90, 0]) disks();
 }
 
 // flat assembly

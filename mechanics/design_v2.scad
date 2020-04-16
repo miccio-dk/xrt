@@ -1,17 +1,15 @@
 // MODEL PARAMS (mm) //
 th = 3; // thickness 
 w = 400; // width 
-d = 200; // depth
-h = 70; // height
+d = 350; // depth
+h = 150; // height
 bor = 22 / 2; // bearing outer radius
 bir = 8 / 2; // bearing inner radius
 sr = 22; // support radius
 sh = 30; // support height 
-dr = d/2-th*4; // disk radius
+bdr = (d/2-th*4); // base disk radius
 nd = 8; // number of disks
-nt = 48; // n teeth
-td = 5; // teeth depth
-kerf = 0.1; // kerf for 3mm mdf
+kerf = 0; // kerf for 3mm mdf
 
 ntw = 15;
 ntd = 7;
@@ -23,6 +21,8 @@ vo = 10 * pow(1-$t, 4); // animation
 vo = 0; // offset
 k = 0.05; // zbuffer semi-fix
 
+
+//disk_tr(0.25, 25);
 assembly();
 //projection(cut = false) assembly_flat();
 
@@ -36,8 +36,8 @@ module assembly() {
     translate([-vo,     0,       vo]) side_short();
     translate([w-th+vo, 0,       vo]) side_short();
     // spinning parts
-    translate([0,       d/2,     h+sh+vo]) rotate([0, 90, 0]) rod();
-    translate([0,       d/2,     h+sh+vo]) rotate([0, 90, 0]) disks();
+    translate([0,       d/2,     h+sh+vo*2]) rotate([0, 90, 0]) rod();
+    translate([0,       d/2,     h+sh+vo*2]) rotate([0, 90, 0]) disks();
 }
 
 // flat assembly
@@ -103,8 +103,10 @@ module top() {
         teeths("d", ntd, true);
         translate([0, d-th, 0]) teeths("w", ntw, true);
         translate([w-th, 0, 0]) teeths("d", ntd, true);
+        m = [0, 0.35, 0.5, 0.75, 1, 1, 0.75, 0.5, 0.35];
         for(i = [1:1:nd]) {
-            translate([w/(nd+1)*i-th, d/2-dr-th, -k/2]) cube([th*3, (dr+th)*2, th+k]);
+            cdr = bdr*m[i];
+            translate([w/(nd+1)*i-th, d/2-cdr-th, -k/2]) cube([th*3, (cdr+th)*2, th+k]);
         }
     }
 }
@@ -116,23 +118,59 @@ module rod() {
     cylinder(w, bir, bir);
 }
 
-module disk() {
+// drm: disk radius multiplier
+// nt: number of teeth
+// td: teeth depth
+// dc: duty cycle
+module disk(drm, nt, td, dc) {
+    // current disk radius = base disk radius * multiplier
+    cdr = bdr * drm; 
     difference() {
-        cylinder(th, dr, dr, $fn=128);
+        cylinder(th, cdr, cdr, $fn=128);
         translate([0,0,-k/2]) cylinder(th+k, bor-kerf, bor-kerf);
-        teh = dr*2*PI / nt; // teeth height
+        tw = cdr*2*PI / nt; // teeth height
         for(i = [1:1:nt]) {
             rotate([0, 0, 360/nt*i]) 
-            translate([-teh/4, dr-td, -k/2]) 
-            cube([teh/2, td, th+k]);
+            translate([-tw/2, cdr-td, -k/2]) 
+            cube([tw*(1-dc), td, th+k]);
         }
     }
 }
 
-module disks() {
-    for(i = [1:1:nd]) {
-        translate([0, 0, w/(nd+1)*i]) disk();
+// trigger disk
+// tl: trigger length
+module disk_tr(drm, tl) {
+    cdr = bdr * drm; // current disk radius = base disk radius * multiplier
+    hr = tl/2 - 5; // handle hole radius
+    ttw = 4; // trigger tooth width
+    union() {
+        difference() {
+            cylinder(th, cdr, cdr, $fn=128);
+            translate([0,0,-k/2]) cylinder(th+k, bor-kerf, bor-kerf);
+        };
+        // handle
+        rotate([0, 0, 90]) difference() {
+            union() {
+                translate([-tl/2, cdr-th, 0]) cube([tl, tl/2, th]);
+                translate([0, cdr-th+tl/2, 0]) cylinder(th, tl/2, tl/2);
+            };
+            translate([0, cdr-th+tl/2, -k/2]) cylinder(th+k, hr, hr);
+        }
+        rotate([0, 0, 0]) translate([-ttw/2, cdr-th, 0]) cube([ttw, ttw*4, th]);
     }
+}
+
+module disks() {
+    translate([0, 0, w/(8+1)*1]) disk_tr(0.25, 25);
+    
+    translate([0, 0, w/(8+1)*2]) disk(0.5,  64,      6, 0.5);
+    translate([0, 0, w/(8+1)*3]) disk(0.75, 96*1.5,  4, 0.5);
+    translate([0, 0, w/(8+1)*4]) disk(1,    128*0.5, 8, 0.5);
+    translate([0, 0, w/(8+1)*5]) disk(1,    128*0.5, 4, 0.25);
+    translate([0, 0, w/(8+1)*6]) disk(0.75, 96,      8, 0.75);
+    translate([0, 0, w/(8+1)*7]) disk(0.5,  64*1.5,  4, 0.5);
+    
+    translate([0, 0, w/(8+1)*8]) disk_tr(0.25, 25);
 }
 
 
